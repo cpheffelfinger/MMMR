@@ -1,0 +1,118 @@
+<?php
+
+
+function getMean ($array){
+    return round((array_sum($array)/ count($array)), 3, PHP_ROUND_HALF_UP);
+}
+
+function getMedian ($array){
+    sort($array);
+    if(count($array)%2 == 0){
+        $index1 = count($array)/2-1;
+        $index2 = (count($array)/2);
+        return round(($array[$index1] + $array[$index2])/2, 3, PHP_ROUND_HALF_UP);
+    }
+    else{
+        $index = ceil(count($array)/2)-1;
+        return round($array[$index],3,PHP_ROUND_HALF_UP);
+    }
+}
+
+function getMode ($array){
+    $associativeArray = [];
+    foreach($array as $value){
+        if(array_key_exists(strval($value), $associativeArray)){
+
+            $indexOfKey = 0;
+            for($i =0; $i<count($associativeArray); $i++)
+            {
+                $keys = array_keys($associativeArray);
+                if($keys[$i] == strval($value)){
+                    $indexOfKey = $i;
+                    break;
+                }
+            }
+            $values = array_values($associativeArray);
+            $associativeArray[strval($value)] = $values[$indexOfKey]+1;
+        }
+        else{
+            $associativeArray[strval($value)] = 1;
+        }
+    }
+    if(max($associativeArray) == 1){
+        return "NULL";
+    }
+
+    return array_keys($associativeArray, max($associativeArray), true);
+}
+
+function getRange ($array){
+    return round(max($array)-min($array), 3, PHP_ROUND_HALF_UP);
+}
+
+
+function createErrorCode($status, $message){
+    return array("error" => array("code" => $status, "message" => $message));
+}
+
+function cleanInput($data){
+    return str_replace("\n", "", $data);
+}
+
+function buildResponse($data){
+
+    try{
+        $associativeArray = json_decode(cleanInput($data), true);
+        if($associativeArray == null){
+            http_response_code(500);
+            return createErrorCode(500, "Improperly formatted JSON (didn't parse)");
+        }
+        if(!array_key_exists("numbers",$associativeArray)){
+            http_response_code(500);
+            return createErrorCode(500, "Improperly formatted JSON (Does not contain \"numbers\" item)");
+        }
+        $numbers = $associativeArray["numbers"];
+        $responseData = array("results" => array( "mean" => getMean($numbers),
+            "median" => getMedian($numbers),
+            "mode" => getMode($numbers),
+            "range" => getRange($numbers)));
+        http_response_code(200);
+        return $responseData;
+    }
+    catch(Exception $e){
+        http_response_code(500);
+        return createErrorCode(500, "Improperly formatted JSON (didn't parse)");
+    }
+
+}
+
+switch ($_SERVER['REQUEST_METHOD'])
+{
+    case "GET":
+        http_response_code(404);
+        $data = createErrorCode(404,"Method GET not available on this endpoint");
+        break;
+    case "POST":
+
+        $data = buildResponse($HTTP_RAW_POST_DATA);
+        break;
+    case "PUT":
+        http_response_code(404);
+        $data = createErrorCode(404,"Method PUT not available on this endpoint");
+        break;
+    case "DELETE":
+        http_response_code(404);
+        $data = createErrorCode(404,"Method DELETE not available on this endpoint");
+        break;
+    default:
+        http_response_code(404);
+        $data = createErrorCode(404,"Only POST available at this endpoint");
+        break;
+
+}
+
+
+
+//return JSON array
+exit(json_encode($data));
+?>
