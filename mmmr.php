@@ -8,41 +8,36 @@ function getMean ($array){
 function getMedian ($array){
     sort($array);
     if(count($array)%2 == 0){
-        $index1 = count($array)/2-1;
-        $index2 = (count($array)/2);
+        $index1 = (count($array)/2)-1;
+        $index2 = $index1+1;
         return round(($array[$index1] + $array[$index2])/2, 3, PHP_ROUND_HALF_UP);
     }
     else{
-        $index = ceil(count($array)/2)-1;
+        $index = (ceil(count($array)/2))-1;
         return round($array[$index],3,PHP_ROUND_HALF_UP);
     }
 }
 
+/*
+ * The values are converted to strings as the php array does not allow floats as keys, as such
+ * the values had to be converted to get he counts.
+ */
 function getMode ($array){
     $associativeArray = [];
     foreach($array as $value){
-        if(array_key_exists(strval($value), $associativeArray)){
-
-            $indexOfKey = 0;
-            for($i =0; $i<count($associativeArray); $i++)
-            {
-                $keys = array_keys($associativeArray);
-                if($keys[$i] == strval($value)){
-                    $indexOfKey = $i;
-                    break;
-                }
-            }
-            $values = array_values($associativeArray);
-            $associativeArray[strval($value)] = $values[$indexOfKey]+1;
+        $valueString = strval($value);
+        if(array_key_exists($valueString, $associativeArray)){
+            $associativeArray[$valueString] = $associativeArray[$valueString]+1;
         }
         else{
-            $associativeArray[strval($value)] = 1;
+            $associativeArray[$valueString] = 1;
         }
     }
+    //If all values only have 1 count there is no mode
     if(max($associativeArray) == 1){
         return "NULL";
     }
-
+    //Returning the array of keys because if multiple values have the same max than the set is multimodal.
     return array_keys($associativeArray, max($associativeArray), true);
 }
 
@@ -111,8 +106,6 @@ switch ($_SERVER['REQUEST_METHOD'])
 
 }
 
-
-
-//return JSON array
+//Return JSON response
 exit(json_encode($data));
 ?>
